@@ -67,6 +67,22 @@ public class DbscanListIndexTests
 		Assert.Equal(5, clusters.Clusters[0].Objects.Count);
 		Assert.Equal(4, clusters.Clusters[1].Objects.Count);
 	}
+
+	[Fact]
+	public void BorderTest5()
+	{
+		var clusters =
+			Dbscan.CalculateClusters(
+				DbscanTestData.Borders,
+				2.0,
+				4);
+
+		Assert.Equal(2, clusters.Clusters.Count);
+		Assert.Equal(0, clusters.UnclusteredObjects.Count);
+
+		Assert.Equal(5, clusters.Clusters[0].Objects.Count);
+		Assert.Equal(4, clusters.Clusters[1].Objects.Count);
+	}
 	#endregion
 
 	#region Ring Data Set

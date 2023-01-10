@@ -51,9 +51,10 @@ public static class Dbscan
 
 		foreach (var p in points)
 		{
-			if (p.Visited) continue;
+			var isVisited = p.ClusterType != ClusterType.Unknown;
+			if (isVisited)
+				continue;
 
-			p.Visited = true;
 			var candidates = index.Search(p, epsilon);
 
 			if (candidates.Count >= minimumPointsPerCluster)
@@ -66,13 +67,18 @@ public static class Dbscan
 						epsilon,
 						minimumPointsPerCluster));
 			}
+			else
+			{
+				p.ClusterType = ClusterType.Noise;
+			}
 		}
 
+		System.Diagnostics.Debug.Assert(!points.Any(p => p.ClusterType == ClusterType.Unknown));
 		return new ClusterSet<T>
 		{
 			Clusters = clusters,
 			UnclusteredObjects = points
-				.Where(p => !p.Clustered)
+				.Where(p => p.ClusterType == ClusterType.Noise)
 				.Select(p => p.Item)
 				.ToList(),
 		};
@@ -82,26 +88,30 @@ public static class Dbscan
 		where T : IPointData
 	{
 		var points = new List<T>() { point.Item };
-		point.Clustered = true;
+
+		System.Diagnostics.Debug.Assert(neighborhood.Count >= minimumPointsPerCluster);
+		point.ClusterType = ClusterType.ClusterCore;
 
 		var queue = new Queue<PointInfo<T>>(neighborhood);
 		while (queue.Any())
 		{
 			var newPoint = queue.Dequeue();
-			if (!newPoint.Visited)
-			{
-				newPoint.Visited = true;
-				var newNeighbors = index.Search(newPoint, epsilon);
-				if (newNeighbors.Count >= minimumPointsPerCluster)
-					foreach (var p in newNeighbors)
-						queue.Enqueue(p);
-			}
+			var isClaimed = newPoint.ClusterType == ClusterType.ClusterBorder || newPoint.ClusterType == ClusterType.ClusterCore;
+			if (isClaimed)
+				continue;
 
-			if (!newPoint.Clustered)
+			var newNeighbors = index.Search(newPoint, epsilon);
+			if (newNeighbors.Count >= minimumPointsPerCluster)
 			{
-				newPoint.Clustered = true;
-				points.Add(newPoint.Item);
+				newPoint.ClusterType = ClusterType.ClusterCore;
+				foreach (var p in newNeighbors)
+					queue.Enqueue(p);
 			}
+			else
+			{
+				newPoint.ClusterType = ClusterType.ClusterBorder;
+			}
+			points.Add(newPoint.Item);
 		}
 
 		return new Cluster<T> { Objects = points, };

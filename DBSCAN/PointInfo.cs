@@ -19,14 +19,9 @@ public class PointInfo<T> : IPointData where T : IPointData
 	public T Item { get; }
 
 	/// <summary>
-	/// Whether or not this point has been clustered
+	/// What type of clustering is assigned to this point
 	/// </summary>
-	public bool Clustered { get; set; }
-
-	/// <summary>
-	/// Whether or not this point has been visited
-	/// </summary>
-	public bool Visited { get; set; }
+	public ClusterType ClusterType { get; set; }
 
 	/// <summary>
 	/// The location of this point
